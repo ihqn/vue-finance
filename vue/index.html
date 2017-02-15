@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>财特</title>
+    <link rel="stylesheet" type="text/css" href="asset/css/bootstrap.min.css">
+    <style type="text/css" media="screen">
+        .pagination{ display: block; }
+        .pagination li{ margin-right:15px; cursor: pointer; }
+        .pagination li:first-child{width: 60px;display: inline-block; }
+        .columns{ background-color: #f6f6f6;padding: 3px 15px;margin-bottom: 30px; }
+        .cp{ cursor: pointer; }
+
+        .bigword{   color: #dd1010;font-size: 18px;font-weight: bold;margin: 0px 3px; }
+        .mt20{margin-top: 20px;}
+        h2{ margin-right: 20px; font-weight: bold; }
+        .mt10{ margin-top: 10px }
+        .c_blue{ color: #337ab7; }
+        .remark{ font-size: 12px; color: #337ab7; cursor: pointer; }
+        .red{ color: #dd1010; }
+        .modal-lg{ width: 90% }
+        .sm-input input.form-control{ width:110px;}
+        .sm-input input{margin-right: 7px;}
+        .sm-input{   padding-left: 3.25%;margin-bottom: 24px;border-bottom: 1px solid #eee;padding-bottom: 15px;}
+    .sm-input .form-group{ margin-right: 50px }
+    input.form-control[type="date"]{ width: 170px; }
+    .costlist .form-group:nth-of-type(odd){ background-color: rgba(239, 239, 239, 0.44);padding:14px 0 10px; }
+    .costlist .form-group:nth-of-type(even){ margin-bottom: 9px;}
+     .costlist label:not(.col-sm-1){ min-width: 100px; position: relative; }
+     .costlist label.col-sm-1{  padding-top: 0px;}
+     .costlist input[type=checkbox], .costlist input[type=radio]{ margin-right: 3px; vertical-align: -2px }
+     .in-bl{ display: inline-block; }
+     .lh0{  line-height: 0;}
+     .ml10{ margin-left: 10px }
+     .add{  font-size: 12px; color: #337ab7; cursor: pointer;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-static-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-9" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">支出</a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-9">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Home</a></li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+<div  id="app">
+    <div class="projects-header">
+        <ul class="nav nav-sidebar col-md-2">
+            <li class="active"><a>支持管理</a></li>
+        </ul>
+        <div class="col-md-9">
+            <div class="clearfix">
+                <div class="pull-left clearfix">
+                    <h2 class="pull-left">支出管理</h2>
+                    <p @click="addnumber" class="pull-right mt20 btn btn-danger" data-toggle="modal" data-target="#myModaladd" >添加</p>
+                </div>
+                <div class="pull-right form-inline mt20">
+                    <div class="form-group">
+                        <input type="text" v-model="keyword" class="form-control" id="exampleInputEmail3" placeholder="输入要搜索的关键字">
+                    </div>
+                </div>
+            </div>
+            <main-grid :datas="datas" :keyword="keyword" :single="single"></main-grid>
+        </div>
+    </div>
+    <pouple :costcode="costcode"  :data="single"  :datas="datas" :bus="bus" :type="type" :depart="depart" :formtype="formtype"></pouple>
+</div>
+<script src="asset/js/jquery.min.js"></script>
+<script src="asset/js/bootstrap.min.js"></script>
+<script src="asset/js/vue.min.js"></script>
+
+<!-- 中心思想 -->
+<script type="text/x-template" id="main-temp">
+<div class="columns mt10">
+    <ul class="pagination">
+        <li>年份</li>
+        <li v-for="c in datas.columns.year" :class="{'red': yearword==c.key}" v-on:click="filer(c.key)">{{c.name}}</li>
+    </ul>
+    <ul class="pagination">
+        <li>月份</li>
+        <li v-for="c in datas.columns.month" :class="{'red': monthword==c.key}" v-on:click="filer(c.key,'monthword' )">{{c.name}}</li>
+    </ul>
+    <ul class="pagination">
+        <li>支出部门</li>
+        <li v-for="c in datas.columns.departmentlist" :class="{'red': departmentword==c.key}" v-on:click="filer(c.key,'departmentword', 'num' )">{{c.name}}</li>
+    </ul>
+    <ul class="pagination">
+        <li>团队/业务</li>
+        <li v-for="c in buslist" :class="{'red': businessword==c.key}" v-on:click="filer(c.key,'businessword', 'num1' )">{{c.name}}</li>
+    </ul>
+    <ul class="pagination">
+        <li>费用类别</li>
+        <li v-for="c in costlist" :class="{'red': costword==c.key}" v-on:click="filer(c.key,'costword', 'num2')">{{c.name}}</li>
+    </ul>
+    <ul class="pagination">
+        <li>科目名称</li>
+        <li v-for="c in subjectlist" :class="{'red': subjectword==c.key}" v-on:click="filer(c.key,'subjectword')">{{c.name}}</li>
+    </ul>
+</div>
+<div class="clearfix">
+    <p class="pull-left">共<span class="bigword">{{datas.deal.dealnum}}</span>笔，总计<span class="bigword">{{datas.deal.sum | currency}}</span></p>
+    <div class="pull-right">
+        <p class="btn btn-default" :class="{'btn-primary': query=='0'}" v-on:click="screen('0')">转账</p>
+        <p class="btn btn-default" :class="{'btn-primary': query=='1'}" v-on:click="screen('1')">现金</p>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>支出编号</th>
+            <th>科目编号</th>
+            <th>部门</th>
+            <th>团队/业务</th>
+            <th>费用类别</th>
+            <th>科目名称</th>
+            <th width="20%">支出摘要</th>
+            <th>金额</th>
+            <th>渠道</th>
+            <th>报销人</th>
+            <th>审批人</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr v-for="data in datas.grid | filterBy query in 'channel' | filterBy keyword |  filterBy yearword in 'code' | filterBy monthword in 'code' | filterBy departmentword in 'department' | filterBy businessword in 'business' | filterBy costword in 'costtype' | filterBy subjectword in 'subject' | limitBy 20 " v-on:dblclick="deltr(data.id)">
+            <td @click="editList(data)" class="c_blue cp">{{ data.code }}</td>
+            <td>{{ data.number }}</td>
+            <td>{{ datas.columns.departmentlist[data.department]['name'] }}</td>
+            <td>{{ datas.columns.departmentlist[data.department]['bus'][data.business]['name'] }}</td>
+            <td>{{ datas.columns.departmentlist[data.department]['bus'][data.business]['type'][data.costtype]['name'] }}</td>
+            <td>{{ datas.columns.departmentlist[data.department]['bus'][data.business]['type'][data.costtype]['depart'][data.subject]['name']}}</td>
+            <td>
+                {{ data.expenditure }}
+                <remark-box :expremark="data"></remark-box>
+            </td>
+            <td>{{ data.money | currency}}</td>
+            <td>{{ data.channel == '1' ? "现金" :"转账" }}</td>
+            <td>{{ data.apply }}</td>
+            <td>{{ data.examine }}</td>
+        </tr>
+    </tbody>
+</table>
+<pouple :costcode="" :data="single" :datas="datas" :bus="bus" :type="type" :depart="depart" :formtype="formtype"></pouple>
+
+</script>
+
+<!-- 备注区域 -->
+<script type="text/x-template" id="remark-temp">
+    <span class="remark" :class="{'red':showRemark}" v-on:click.stop="notify">备注</span>
+    <div class="pouple" v-if="showRemark" >
+        <!--<p v-show="issave" v-on:click="editRemark">{{expremark.expRemark}}</p>-->
+        <input type="text" class="form-control" v-model="expremark.remark" v-on:change="saveRemark(expremark)" placeholder="输入备注" />
+    </div>
+</script>
+
+<!-- 添加 -->
+<script type="text/x-template" id="pouple-temp">
+<div class="modal fade" id="myModal{{formtype}}" tabindex="-1"  @click="hidepouple('myModal'+formtype)" aria-hidden="true" data-backdrop="static">
+<div class="modal-dialog modal-lg" >
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" aria-label="Close" @click="hidepouple('myModal'+formtype)">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="clearfix lh0">
+                <div class="pull-left">
+                    <h4 class="modal-title in-bl" id="myModalLabel">{{formtype=="edit" ?"编辑支出明细": "添加支出明细"}}</h4>
+                    <p class="red in-bl ml10">支出编号:{{data.code}}</p>
+                </div>
+                <p class="pull-right dis"></p>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <form name="form{{formtype}}">
+                <input type="hidden" name="code" value="{{data.code}}">
+                <input type="hidden" name="id" value="{{data.id}}">
+                <div class="form-inline sm-input">
+                    <div class="form-group">
+                        <label for="">支出时间</label>
+                        <input type="date" name="date" class="form-control js-input" placeholder="时间" v-model="data.date" vail="otempty" errormsg="请选择支出时间" /></div>
+                    <div class="form-group">
+                        <label for="">支出金额</label>
+                        <input type="number" name="money" class="form-control js-input" placeholder="数字" v-model="data.money"  vail="otempty" errormsg="请输入支出金额" />
+                        <label><input type="radio" name="channel" value="0" v-model="data.channel">转账</label>
+                        <label><input type="radio" name="channel" value="1" v-model="data.channel">现金</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="">报销人</label>
+                        <input type="text" name="apply" class="form-control js-input" placeholder="姓名" v-model="data.apply"  vail="otempty" errormsg="请输入报销人" />
+                    </div>
+                    <div class="form-group">
+                        <label for="">审批人</label>
+                        <input type="text" name="examine" class="form-control js-input" placeholder="姓名" v-model="data.examine" vail="otempty" errormsg="请输入审批人" />
+                    </div>
+                </div>
+                <div class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-sm-1 control-label">科目编码</label>
+                    <div class="col-sm-2">
+                        <input type="text" name="number" v-on:change="changelist" class="form-control js-input" placeholder="科目编码" maxlength="10" v-model="data.number" vail="otempty" errormsg="请输入科目编码" />
+                    </div>
+                    <p class="col-sm-2 red mt10" v-if="iserr">无此编码</p>
+                </div>
+
+                <div class="costlist">
+                    <div class="form-group">
+                        <label for="" class="col-sm-1 control-label">支出部门</label>
+                        <div class="col-sm-10" >
+                            <label v-for="tem in datas.columns.departmentlist" v-on:dblclick="addproject(0,'bus',tem)">
+                                <input type="radio" name="department" v-on:change="changecode('0')" value="{{tem.key}}" v-model="data.department">{{tem.key}}-{{tem.name}}</label>
+                            <span class="add" v-on:click="addproject(0,'bus')">{{!isshow0 ? '添加' :'收起'}}</span>
+                            <addproject-box :isshow="isshow0" :data="datas.columns.departmentlist"  :addname="tem" :datas="datas"></addproject-box>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="col-sm-1 control-label">支出项目</label>
+                        <div class="col-sm-10" >
+                            <label v-for="tem in bus" v-on:dblclick="addproject(1,'type',tem)">
+                                <input type="radio" name="business" v-on:change="changecode('1')"  value="{{tem.key}}" v-model="data.business">{{tem.key}}-{{tem.name}}</label>
+                            <span class="add" v-on:click="addproject(1,'type')">{{!isshow1 ? '添加' :'收起'}}</span>
+                            <addproject-box :isshow="isshow1" :data="bus" :addname="tem" :datas="datas"></addproject-box>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="col-sm-1 control-label">支出类别</label>
+                        <div class="col-sm-10">
+                            <label v-for="tem in type" v-on:dblclick="addproject(2,'depart',tem)">
+                                <input type="radio" name="costtype" v-on:change="changecode('2')"  value="{{tem.key}}" v-model="data.costtype" >{{tem.key}}-{{tem.name}}</label>
+                            <span class="add" v-on:click="addproject(2,'depart')">{{!isshow2 ? '添加' :'收起'}}</span>
+                            <addproject-box :isshow="isshow2" :data="type" :addname="tem" :datas="datas"></addproject-box>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="col-sm-1 control-label">支出内容</label>
+                        <div class="col-sm-10">
+                            <label v-for="tem in depart" v-on:dblclick="addproject(3,'zero',tem)">
+                                <input type="radio" name="subject" v-on:change="changecode('3')" value="{{tem.key}}" v-model="data.subject"  >{{tem.key}}-{{tem.name}}</label>
+                            <span class="add" v-on:click="addproject(3)">{{!isshow3 ? '添加' :'收起'}}</span>
+                            <addproject-box :isshow="isshow3" :data="depart"  :addname="tem" :datas="datas"></addproject-box>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="col-sm-1 control-label">费用标签</label>
+                        <div class="col-sm-10">
+                            <label><input type="radio" name="tag" value="0" v-model="data.tag" >无
+                            </label><label>
+                            <input type="radio" name="tag" value="1" v-model="data.tag">固定资产
+                            </label><label>
+                            <input type="radio" name="tag" value="2" v-model="data.tag">项目开支</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="" class="col-sm-1 control-label" >支出摘要</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" name="expenditure" v-model="data.expenditure" placeholder="支出摘要"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="" class="col-sm-1 control-label">备注信息</label>
+                    <div class="col-sm-10">
+                        <textarea name="remark" class="form-control" placeholder="备注信息" v-model="data.remark"></textarea>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" @click="hidepouple('myModal'+formtype)">取消</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @click="add(formtype)">保存</button>
+        </div>
+    </div>
+</div>
+</div>
+</script>
+
+<!-- 添加区域 -->
+<script type="text/x-template" id="addproject-temp">
+    <div class="pouple" v-if="isshow" >
+        <input type="text" class="form-control" v-model="addname.name" v-on:change="addpr()"  placeholder="输入项目名称" />
+    </div>
+</script>
+<script src="http://job.beihai365.com/myjob/tpl/assets/js/validate.min.js"></script>
+<script src="asset/js/cw.js"></script>
+</body>
+</html>
